@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-route-grid"
+version = "0.1.0"
+description = "An audited routing layer for multi-agent teams: zone-based routing policy, workspace isolation, and a hash-chained decision trail (research prototype / AI-assisted development)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "agent-route-grid maintainers", email = "2307788504@qq.com"}]
+keywords = ["agent", "multi-agent", "routing", "orchestration", "audit", "trail", "llm"]
+
+[project.urls]
+Homepage = "https://gitcode.com/gcw_MKhSyoGN/agent-route-grid"
+
+[tool.setuptools.packages.find]
+include = ["routegrid*"]
