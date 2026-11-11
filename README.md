@@ -1,28 +1,55 @@
 # agent-route-grid
 
-An **audited routing layer** for multi-agent teams. It makes explicit what most
-agent frameworks leave implicit: *who* may execute a task (zone-based routing),
-*who* may review or join a panel (independent verification), and *what* was
-delegated, decided, and returned (hash-chained trail).
+> **An audited routing layer for multi-agent teams** — zone-based routing policy,
+> workspace isolation, and a hash-chained decision trail. Who executes, who
+> reviews, who decides — visible and verifiable.
 
-*Research prototype / AI-assisted development. MIT licensed.*
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+![Tests](https://img.shields.io/badge/tests-35%20passed-green)
+![Deps](https://img.shields.io/badge/runtime%20deps-0-green)
+![Status](https://img.shields.io/badge/status-research%20prototype-orange)
 
-## Why
+[中文版](docs/README.zh-CN.md) · *Research prototype / AI-assisted development.*
+
+---
 
 Multi-agent teams grow fast and drift into chaos: nobody knows who was supposed
-to decide, whether anyone reviewed it, or what happened. This library turns
-routing into a **visible policy** and every decision into a **verifiable
-record** — the same fail-closed philosophy as the
-[agent-call-audit](https://gitcode.com/gcw_MKhSyoGN/agent-call-audit) family.
+to decide, whether anyone reviewed it, or what actually happened. This library
+turns routing into a **visible policy** and every decision into a **verifiable
+record**.
+
+## Why a routing layer?
+
+Most agent frameworks hand you workers; nobody hands you **governance**. This
+library packages the governance questions a real team asks:
+
+- **Who may execute this?** → zone policy (risk-based)
+- **Who reviews it?** → independent reviewer (yellow zone)
+- **Who else needs a say?** → panel consultation (red zone)
+- **What happened?** → hash-chained trail, `verify()` offline
 
 ## Route zones
 
 | Zone | When | Strategy |
 |:--|:--|:--|
-| green | low risk, routine | coordinator self-executes |
-| yellow | medium risk | delegate to one capable worker, then independent review |
-| red | high / critical risk | panel consultation, aggregate; any fault keeps result fail-closed |
-| purple | training / mentorship | route as a learning exercise with a referee |
+| `green` | low risk, routine | coordinator self-executes |
+| `yellow` | medium risk | delegate to one worker, then **independent review** |
+| `red` | high / critical risk | **panel consultation**, aggregate; any fault keeps fail-closed |
+| `purple` | training / mentorship | route as a learning exercise with a referee |
+
+The mapping is deterministic and injectable: pass your own `ZonePolicy`.
+
+## Product family
+
+Part of the **Verifiable-agent family** — one fail-closed design language:
+
+| Repo | Role |
+|:--|:--|
+| [agent-call-audit](https://gitcode.com/gcw_MKhSyoGN/agent-call-audit) | audit **engine** for agent tool calls |
+| [agent-memory-ledger](https://gitcode.com/gcw_MKhSyoGN/agent-memory-ledger) | verifiable **memory** layer |
+| [agent-audit-gateway](https://gitcode.com/gcw_MKhSyoGN/agent-audit-gateway) | HTTP **gateway** around the engine |
+| **agent-route-grid** | audited multi-agent **routing** (this repo) |
 
 ## Install
 
@@ -44,49 +71,38 @@ team = [
     AgentSpec(name="reviewer", capabilities=("lookup",), scope="ws-r",
               review_capable=True),
 ]
-
 co = Coordinator(team, timeout_s=2.0)
 res = co.route(
     Task(name="medium decision", risk="medium", requires=("lookup",)),
-    worker_fns={"worker": lambda t: {"summary": "done"}},          # injected executors
+    worker_fns={"worker": lambda t: {"summary": "done"}},          # your executors
     reviewer_fns={"reviewer": lambda t, ctx: {"verdict": "approve"}},
 )
 print(res.zone, res.strategy, res.fail_closed)   # yellow delegate+review False
 ```
 
-Run the five-scenario walkthrough:
+Workers are **injected callables** — the coordinator never runs business logic;
+it only routes, times out, collects, and records.
 
-```bash
-python examples/demo.py
+## Proof of life
+
+Real output from `python examples/demo.py`:
+
 ```
-
-## Workspace isolation
-
-Agents may only write their own `scope` (plus declared `shared` workspaces).
-Attempts to write anything else are denied:
-
-```python
-from routegrid import ScopeGuard
-guard = ScopeGuard(team)
-guard.assert_write(team[0], "ws-w")          # ok
-guard.assert_write(team[0], "ws-r")          # PermissionError
-```
-
-## Verifiable trail
-
-Every `route()` appends a hash-chained event (`task`, `zone`, `strategy`,
-per-call statuses, `fail_closed`). Check the whole chain anytime:
-
-```python
-co.trail.verify()   # (ok, first_bad_index_or_None, total)
+1 green  -> zone=green  strategy=self-execute   fail_closed=False
+2 yellow -> zone=yellow strategy=delegate+review fail_closed=False
+3 red    -> zone=red    strategy=panel+aggregate fail_closed=False
+4 purple -> zone=purple strategy=mentor          fail_closed=False
+workspace isolation: worker->own True | worker->other False
+trail verification: 4 entries, OK
+fail-closed demo: panel-a errored -> fail_closed=True
 ```
 
 ## Fail-closed invariants
 
 | Invariant | Guarantee |
 |:--|:--|
-| Worker fault -> fail_closed | a worker error/timeout marks the call and the route result fail-closed |
-| Reviewer fault -> fail_closed | an unavailable/broken review keeps the result fail-closed |
+| Worker fault | worker error/timeout marks the call and route result fail-closed |
+| Reviewer fault | missing/broken review keeps the result fail-closed |
 | Panel dissent | red-zone panel with any non-ok call keeps denial semantics |
 | Scope isolation | writing another agent's workspace is denied |
 | Trail tamper-evident | `verify()` detects any modification to the chain |
@@ -97,19 +113,22 @@ co.trail.verify()   # (ok, first_bad_index_or_None, total)
 routegrid/
 ├── models.py       AgentSpec / Task / WorkerCall / RouteResult
 ├── policy.py       ZonePolicy (zone_for / panel_members), DEFAULT_POLICY
-├── coordinator.py  Coordinator: route() by zone, timestamped threads, trail
+├── coordinator.py  Coordinator: route() by zone, timed threads, trail
 ├── scope.py        ScopeGuard: workspace write isolation
 └── trail.py        AuditTrail: append-only JSONL + sha256 chain
 examples/           demo.py (five-scenario walkthrough)
 tests/              35 unit tests
 ```
 
-## Contributing / Security
+## Roadmap ideas
+
+- Async orchestration (parallel panel with fan-out)
+- Plugin hooks for human-in-the-loop review UIs
+- Trail exporter (MCP / OTel)
+
+## Contributing / Security / License
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) — fail-closed first, sanitized commits,
   green tests.
 - [SECURITY.md](SECURITY.md) — report privately; reference implementation.
-
-## License
-
-MIT — see [LICENSE](LICENSE). Maintainers: `agent-route-grid maintainers`.
+- [LICENSE](LICENSE) — MIT, `agent-route-grid maintainers`.
