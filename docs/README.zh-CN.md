@@ -1,7 +1,15 @@
 # agent-route-grid（中文）
 
+
 > **多 Agent 团队的审计路由层** —— 基于风险区的路由策略、工作区隔离、哈希链决策留痕。
 > **谁执行、谁复核、谁拍板——可见、可验证。**
+
+```bash
+pip install agent-route-grid          # 零依赖，Python 3.9+
+```
+
+<a href="https://gitcode.com/gcw_MKhSyoGN/agent-route-grid"><img src="https://img.shields.io/badge/GitCode-gcw_MKhSyoGN%2Fagent-route-grid-blue" alt="GitCode"></a>
+<a href="https://github.com/langarden/agent-route-grid"><img src="https://img.shields.io/badge/GitHub-langarden%2Fagent-route-grid-black" alt="GitHub"></a>
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)

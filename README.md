@@ -4,11 +4,18 @@
 > workspace isolation, and a hash-chained decision trail. Who executes, who
 > reviews, who decides — visible and verifiable.
 
+```bash
+pip install agent-route-grid            # zero deps, Python 3.9+
+```
+
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Tests](https://img.shields.io/badge/tests-35%20passed-green)
 ![Deps](https://img.shields.io/badge/runtime%20deps-0-green)
 ![Status](https://img.shields.io/badge/status-research%20prototype-orange)
+
+<a href="https://gitcode.com/gcw_MKhSyoGN/agent-route-grid"><img src="https://img.shields.io/badge/GitCode-gcw_MKhSyoGN%2Fagent-route-grid-blue" alt="GitCode"></a>
+<a href="https://github.com/langarden/agent-route-grid"><img src="https://img.shields.io/badge/GitHub-langarden%2Fagent-route-grid-black" alt="GitHub"></a>
 
 [中文版](docs/README.zh-CN.md) · *Research prototype / AI-assisted development.*
 
